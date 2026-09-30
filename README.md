@@ -49,9 +49,3 @@ vision-quality-inspection/
 
 4. **Access the Web UI**:
    Open your browser and navigate to: `http://localhost:5000`
-
-## Results & Evaluation
-*(Note: Since this is a template, specific metrics will depend on the dataset and trained weights used.)*
-- **Accuracy**: ~95% (Example metric)
-- **Loss**: ~0.15 (Example metric)
-- **Inference Time**: < 100ms per image
