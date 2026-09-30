@@ -1,0 +1,144 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Vision-Based Quality Inspection</title>
+    <style>
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: #0f172a;
+            color: #f8fafc;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            padding: 50px;
+        }
+        .container {
+            background-color: #1e293b;
+            padding: 40px;
+            border-radius: 12px;
+            box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.5);
+            text-align: center;
+            max-width: 500px;
+            width: 100%;
+        }
+        h1 {
+            margin-bottom: 20px;
+            color: #38bdf8;
+        }
+        input[type="file"] {
+            margin-bottom: 20px;
+            display: block;
+            width: 100%;
+        }
+        button {
+            background-color: #0ea5e9;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 16px;
+            font-weight: bold;
+            transition: background-color 0.2s;
+        }
+        button:hover {
+            background-color: #0284c7;
+        }
+        #result {
+            margin-top: 20px;
+            padding: 15px;
+            border-radius: 8px;
+            font-size: 18px;
+            font-weight: bold;
+            display: none;
+        }
+        .pass {
+            background-color: #166534;
+            color: #4ade80;
+        }
+        .defect {
+            background-color: #991b1b;
+            color: #f87171;
+        }
+        #preview {
+            max-width: 100%;
+            margin-top: 15px;
+            border-radius: 8px;
+            display: none;
+        }
+    </style>
+</head>
+<body>
+
+    <div class="container">
+        <h1>Quality Inspection</h1>
+        <form id="uploadForm">
+            <input type="file" id="imageInput" accept="image/*" required>
+            <img id="preview" alt="Image Preview">
+            <button type="submit">Inspect Component</button>
+        </form>
+
+        <div id="result"></div>
+    </div>
+
+    <script>
+        const imageInput = document.getElementById('imageInput');
+        const preview = document.getElementById('preview');
+        const resultDiv = document.getElementById('result');
+        const form = document.getElementById('uploadForm');
+
+        imageInput.addEventListener('change', function(e) {
+            const file = e.target.files[0];
+            if (file) {
+                const reader = new FileReader();
+                reader.onload = function(e) {
+                    preview.src = e.target.result;
+                    preview.style.display = 'block';
+                    resultDiv.style.display = 'none';
+                }
+                reader.readAsDataURL(file);
+            }
+        });
+
+        form.addEventListener('submit', async function(e) {
+            e.preventDefault();
+            
+            const file = imageInput.files[0];
+            if (!file) return;
+
+            const formData = new FormData();
+            formData.append('image', file);
+
+            try {
+                resultDiv.style.display = 'block';
+                resultDiv.className = '';
+                resultDiv.innerText = 'Inspecting...';
+
+                const response = await fetch('/predict', {
+                    method: 'POST',
+                    body: formData
+                });
+                
+                const data = await response.json();
+                
+                if (response.ok) {
+                    resultDiv.innerText = `${data.verdict} (Confidence: ${data.confidence})`;
+                    if (data.verdict === 'PASS') {
+                        resultDiv.className = 'pass';
+                    } else {
+                        resultDiv.className = 'defect';
+                    }
+                } else {
+                    resultDiv.innerText = `Error: ${data.error}`;
+                    resultDiv.className = 'defect';
+                }
+            } catch (error) {
+                resultDiv.innerText = `Error: ${error.message}`;
+                resultDiv.className = 'defect';
+            }
+        });
+    </script>
+</body>
+</html>
